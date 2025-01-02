@@ -1,10 +1,7 @@
-# linux_tools
-general pourpose linux programs and bash scripts
+# ansicolors.sh
+Shows all the 256 ansi colors codes
 #
+## Usage:
+``` ansicolor ```	print all the 256 ansi color codes
 
-### List
-print the directory tree with infos
-#
-
-### ansicolors.sh
-print the ansi colors codes
+``` ansicolor n ``` (0 <= n <= 255) print some strings in the n ansi color
