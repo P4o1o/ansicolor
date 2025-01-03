@@ -1,4 +1,4 @@
-# ansicolors.sh
+# ansicolor
 Shows all the 256 ansi color codes
 #
 ## Usage:
