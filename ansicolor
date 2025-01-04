@@ -1,7 +1,7 @@
 #!/bin/bash
 
 help(){
-    printf "ansicolor\t\tprint all the 256 ansi color codes\nansicolor -b\t\tprint all the 256 ansi color codes (backgrownd colored output)\nansicolor <n>\t\t(0 <= n <= 255) print some strings in the n ansi color\nansicolor -b <n>\t(0 <= n <= 255) print some strings in the n ansi color (backgrownd colored output)\n"
+    printf "ansicolor\t\tprint all the 256 ansi color codes\nansicolor -b\t\tprint all the 256 ansi color codes (background colored output)\nansicolor <n>\t\t(0 <= n <= 255) print some strings in the n ansi color\nansicolor -b <n>\t(0 <= n <= 255) print some strings in the n ansi color (background colored output)\n"
 }
 
 ansicolors() {
