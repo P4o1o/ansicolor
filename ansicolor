@@ -63,7 +63,8 @@ else
         ansicolors
     elif [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 255 )); then
         for i in {0..10}; do
-            printf "\x1b[${i};$COLOR_TYPE;5;${1}mColor %d" "$1"
+            printf "\x1b[${i};$COLOR_TYPE;5;${1}m"
+            echo -n "\\x1b[$i;$COLOR_TYPE;5;${1}m"
             tput sgr0
             printf "\n"
         done
