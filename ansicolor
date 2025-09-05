@@ -10,44 +10,39 @@ ansicolors() {
     for i in {0..7}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m   %d  " "$i"
     done
-    tput sgr0
-    printf "\n\nIntense:\t"
+    printf "\033[0;10m\n\nIntense:\t"
     for i in {8..9}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m   %d  " "$i"
     done
     for i in {10..15}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m  %d  " "$i"
     done
-    tput sgr0
-    printf "\n\n\n\t\t"
+    printf "\033[0;10m\n\n\n\t\t"
     local j
     for i in {0..9}; do
         for j in {0..7}; do
             printf "\x1b[$COLOR_TYPE;5;$(($i * 8 + $j + 16))m  %d  " "$(($i * 8 + $j + 16))"
         done
-        tput sgr0
-        printf "\n\t\t"
+        printf "\033[0;10m\n\t\t"
     done
     for i in {96..99}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m  %d  " "$i"
     done;
     for i in {100..103}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m %d  " "$i"
-    done;tput sgr0
-    printf "\n\t\t"
+    done;
+    printf "\033[0;10m\n\t\t"
     for i in {11..26}; do
         for j in {0..7}; do
             printf "\x1b[$COLOR_TYPE;5;$(($i * 8 + $j + 16))m %d  " "$(($i * 8 + $j + 16))"
         done
-        tput sgr0
-        printf "\n\t\t"
+        printf "\033[0;10m\n\t\t"
     done
     printf "\n\nGreys:\t\t"
     for i in {232..255}; do
         printf "\x1b[$COLOR_TYPE;5;${i}m%d  " "$i"
     done
-    tput sgr0
-    printf "\n\n"
+    printf "\033[0;10m\n\n"
 }
 
 COLOR_TYPE=38
@@ -65,8 +60,7 @@ else
         for i in {0..10}; do
             printf "\x1b[${i};$COLOR_TYPE;5;${1}m"
             echo -n "\\x1b[$i;$COLOR_TYPE;5;${1}m"
-            tput sgr0
-            printf "\n"
+            printf "\033[0;10m\n"
         done
     else
         help
