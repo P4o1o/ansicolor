@@ -8,33 +8,19 @@ ansicolors() {
     local i
     printf "\nStandard:\t"
     for i in {0..7}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m   %d  " "$i"
+        printf "%b %3d " "\x1b[${COLOR_TYPE};5;${i}m" "$i"
     done
     printf "\033[0;10m\n\nIntense:\t"
-    for i in {8..9}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m   %d  " "$i"
-    done
-    for i in {10..15}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m  %d  " "$i"
+    for i in {8..15}; do
+        printf "%b %3d " "\x1b[${COLOR_TYPE};5;${i}m" "$i"
     done
     printf "\033[0;10m\n\n\n\t\t"
     local j
-    for i in {0..9}; do
+    local k
+    for i in {0..26}; do
         for j in {0..7}; do
-            printf "\x1b[$COLOR_TYPE;5;$(($i * 8 + $j + 16))m  %d  " "$(($i * 8 + $j + 16))"
-        done
-        printf "\033[0;10m\n\t\t"
-    done
-    for i in {96..99}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m  %d  " "$i"
-    done;
-    for i in {100..103}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m %d  " "$i"
-    done;
-    printf "\033[0;10m\n\t\t"
-    for i in {11..26}; do
-        for j in {0..7}; do
-            printf "\x1b[$COLOR_TYPE;5;$(($i * 8 + $j + 16))m %d  " "$(($i * 8 + $j + 16))"
+            ((k = i * 8 + j + 16))
+            printf "%b %3d" "\x1b[${COLOR_TYPE};5;${k}m" "$k"
         done
         printf "\033[0;10m\n\t\t"
     done
