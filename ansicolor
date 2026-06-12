@@ -9,7 +9,7 @@ help(){
 }
 
 wrong_args() {
-    echo  "Invalid argument for ${2}: ${1}, type ansicolor -h for usage." 1>&2
+    echo  "Invalid argument for ${1}: '${2}'. type ansicolor -h for usage." 1>&2
     exit -1
 }
 
@@ -81,19 +81,20 @@ main() {
                     fi
                 ;;
                 -h|--help) usage ;;
-                *) break ;;
+                *)
+                    if [[ ! "$1" =~ ^[0-9]+$ ]] || (( $1 < 0 || $1 > 255 )); then
+                        wrong_args "color code" "$1"
+                    elif [[ -n $2 ]]; then
+                        echo  "Too many arguments, type ansicolor -h for usage." 1>&2
+                        exit 2
+                    else
+                        ansicolor_list "$color_type" "$1" "$color_mode"
+                        exit 0
+                    fi
+                ;;
             esac
         done
-        if [[ -z $1 ]]; then
-            ansicolor_table "$color_type" "$color_mode"
-        elif [[ $# -gt 1 ]]; then
-            echo  "Too many arguments, type ansicolor -h for usage." 1>&2
-            exit -1
-        elif [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 255 )); then
-            ansicolor_list "$color_type" "$1" "$color_mode"
-        else
-            wrong_args "color code" "$1"
-        fi
+        ansicolor_table "$color_type" "$color_mode"
     fi
 }
 
