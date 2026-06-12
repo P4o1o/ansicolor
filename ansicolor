@@ -71,9 +71,9 @@ main() {
         while [[ $# -gt 0 ]] ; do
             case "$1" in
                 -b) color_type=48; shift ;;
-                -t)
+                -t|--sgr)
                     shift
-                    if [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 10 )); then
+                    if [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 107 )); then
                         color_mode="$1"
                         shift
                     else
