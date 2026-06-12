@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
 
 help(){
-    printf "ansicolor\t\tprint all the 256 ansi color codes\nansicolor -b\t\tprint all the 256 ansi color codes (background colored output)\nansicolor <n>\t\t(0 <= n <= 255) print some strings in the n ansi color\nansicolor -b <n>\t(0 <= n <= 255) print some strings in the n ansi color (background colored output)\n"
+    echo -e "ansicolor\t\tprint all the 256 ansi color codes"
+    echo -e "ansicolor -b\t\tprint all the 256 ansi color codes (background colored output)"
+    echo -e "ansicolor <n>\t\t(0 <= n <= 255) print some strings in the n ansi color"
+    echo -e "ansicolor -b <n>\t(0 <= n <= 255) print some strings in the n ansi color (background colored output)"
+    exit 0
+}
+
+wrong_args() {
+    echo  "Invalid argument ${2} for ${1}, type ansicolor -h for usage." 1>&2
+    exit -1
 }
 
 ansicolors() {
+    local c_type
+    local c_mode
+    c_type="${1}"
+    c_mode="${2}"
     local i
     printf "\nStandard:\t"
     for i in {0..7}; do
-        printf "%b %3d " "\x1b[${COLOR_TYPE};5;${i}m" "$i"
+        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
     done
     printf "\033[0;10m\n\nIntense:\t"
     for i in {8..15}; do
-        printf "%b %3d " "\x1b[${COLOR_TYPE};5;${i}m" "$i"
+        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
     done
     printf "\033[0;10m\n\n\n\t\t"
     local j
@@ -20,36 +33,57 @@ ansicolors() {
     for i in {0..26}; do
         for j in {0..7}; do
             ((k = i * 8 + j + 16))
-            printf "%b %3d" "\x1b[${COLOR_TYPE};5;${k}m" "$k"
+            printf "%b%5d " "\x1b[${c_type};${c_mode};${k}m" "$k"
         done
         printf "\033[0;10m\n\t\t"
     done
     printf "\n\nGreys:\t\t"
     for i in {232..255}; do
-        printf "\x1b[$COLOR_TYPE;5;${i}m%d  " "$i"
+        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
     done
     printf "\033[0;10m\n\n"
 }
 
-COLOR_TYPE=38
-
-if [[ -z $1 ]]; then
-    ansicolors
-else
-    if [[ $1 = "-b" ]]; then
-        COLOR_TYPE=48
-        shift
-    fi
+main() {
     if [[ -z $1 ]]; then
-        ansicolors
-    elif [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 255 )); then
-        for i in {0..10}; do
-            printf "\x1b[${i};$COLOR_TYPE;5;${1}m"
-            echo -n "\\x1b[$i;$COLOR_TYPE;5;${1}m"
-            printf "\033[0;10m\n"
-        done
+        ansicolors 38 5
     else
-        help
+        local COLOR_TYPE
+        COLOR_TYPE=38
+        local COLOR_MODE
+        COLOR_MODE=5
+        while [[ $# -gt 0 ]] ; do
+            case "$1" in
+                -b) COLOR_TYPE=48; shift ;;
+                -t)
+                    shift
+                    COLOR_MODE="$1"
+                    if [[ "$COLOR_MODE" =~ ^[0-9]+$ ]] && (( COLOR_MODE >= 0 && COLOR_MODE <= 10 )); then
+                        shift
+                    else
+                        wrong_args "-t" "$COLOR_MODE"
+                    fi
+                ;;
+                -h|--help) usage ;;
+                *) break ;;
+            esac
+        done
+        if [[ -z $1 ]]; then
+            ansicolors "$COLOR_TYPE" "$COLOR_MODE"
+        elif [[ $# -gt 1 ]]; then
+            echo  "Too many arguments, type ansicolor -h for usage." 1>&2
+            exit -1
+        elif [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 255 )); then
+            local text
+            for i in {0..10}; do
+                text="\\x1b[${i};$COLOR_MODE;5;${1}m"
+                printf "%b%s%b\n" "$text" "$text" "\033[0;10m"
+            done
+            else
+                wrong_args "ansicolor" "$1"
+        fi
     fi
+}
 
-fi
+main "$@"
+
