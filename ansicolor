@@ -9,23 +9,23 @@ help(){
 }
 
 wrong_args() {
-    echo  "Invalid argument ${2} for ${1}, type ansicolor -h for usage." 1>&2
+    echo  "Invalid argument for ${2}: ${1}, type ansicolor -h for usage." 1>&2
     exit -1
 }
 
-ansicolors() {
-    local c_type
+ansicolor_table() {
     local c_mode
+    local c_type
     c_type="${1}"
-    c_mode="${2}"
+    c_mode="${2:-0}"
     local i
     printf "\nStandard:\t"
     for i in {0..7}; do
-        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
+        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
     done
     printf "\033[0;10m\n\nIntense:\t"
     for i in {8..15}; do
-        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
+        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
     done
     printf "\033[0;10m\n\n\n\t\t"
     local j
@@ -33,35 +33,51 @@ ansicolors() {
     for i in {0..26}; do
         for j in {0..7}; do
             ((k = i * 8 + j + 16))
-            printf "%b%5d " "\x1b[${c_type};${c_mode};${k}m" "$k"
+            printf "%b%5d " "\x1b[${c_mode};${c_type};5;${k}m" "$k"
         done
         printf "\033[0;10m\n\t\t"
     done
     printf "\n\nGreys:\t\t"
     for i in {232..255}; do
-        printf "%b%5d " "\x1b[${c_type};${c_mode};${i}m" "$i"
+        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
     done
     printf "\033[0;10m\n\n"
 }
 
+ansicolor_list() {
+    local c_mode
+    local c_type
+    local color
+    c_type="${1}"
+    color="${2}"
+    modes=({0..10})
+    c_mode="${3:-${modes[@]}}"
+    local text
+    local i
+    for i in ${c_mode[@]}; do
+        text="\\x1b[${i};${color_type};5;${color}m"
+        printf "%b%s%b\n" "$text" "$text" "\033[0;10m"
+    done
+}
+
 main() {
     if [[ -z $1 ]]; then
-        ansicolors 38 5
+        ansicolor_table 38 0
     else
-        local COLOR_TYPE
-        COLOR_TYPE=38
-        local COLOR_MODE
-        COLOR_MODE=5
+        local color_mode
+        local color_type
+        color_type=38
+        color_mode=
         while [[ $# -gt 0 ]] ; do
             case "$1" in
-                -b) COLOR_TYPE=48; shift ;;
+                -b) color_type=48; shift ;;
                 -t)
                     shift
-                    COLOR_MODE="$1"
-                    if [[ "$COLOR_MODE" =~ ^[0-9]+$ ]] && (( COLOR_MODE >= 0 && COLOR_MODE <= 10 )); then
+                    if [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 10 )); then
+                        color_mode="$1"
                         shift
                     else
-                        wrong_args "-t" "$COLOR_MODE"
+                        wrong_args "-t" "$color_mode"
                     fi
                 ;;
                 -h|--help) usage ;;
@@ -69,18 +85,14 @@ main() {
             esac
         done
         if [[ -z $1 ]]; then
-            ansicolors "$COLOR_TYPE" "$COLOR_MODE"
+            ansicolor_table "$color_type" "$color_mode"
         elif [[ $# -gt 1 ]]; then
             echo  "Too many arguments, type ansicolor -h for usage." 1>&2
             exit -1
         elif [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 255 )); then
-            local text
-            for i in {0..10}; do
-                text="\\x1b[${i};$COLOR_MODE;5;${1}m"
-                printf "%b%s%b\n" "$text" "$text" "\033[0;10m"
-            done
-            else
-                wrong_args "ansicolor" "$1"
+            ansicolor_list "$color_type" "$1" "$color_mode"
+        else
+            wrong_args "color code" "$1"
         fi
     fi
 }
