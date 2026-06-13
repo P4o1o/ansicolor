@@ -1,102 +1,297 @@
 #!/usr/bin/env bash
 
-help(){
-    echo -e "ansicolor\t\tprint all the 256 ansi color codes"
-    echo -e "ansicolor -b\t\tprint all the 256 ansi color codes (background colored output)"
-    echo -e "ansicolor <n>\t\t(0 <= n <= 255) print some strings in the n ansi color"
-    echo -e "ansicolor -b <n>\t(0 <= n <= 255) print some strings in the n ansi color (background colored output)"
-    exit 0
+help() {
+cat <<'EOF'
+Usage:
+  ansicolor
+      Show the 256 ANSI foreground color table.
+
+  ansicolor TEXT...
+      Print TEXT using the terminal default style.
+
+  ansicolor -- TEXT...
+      Stop option parsing and print TEXT literally.
+
+Tables:
+  ansicolor -f
+      Show the foreground color table.
+
+  ansicolor -b
+      Show the background color table.
+
+  ansicolor -s
+      Show the SGR attribute table.
+
+Fixed values:
+  ansicolor -f=LIST [TEXT...]
+      Use foreground color(s).
+
+  ansicolor -b=LIST [TEXT...]
+      Use background color(s).
+
+  ansicolor -s=LIST [TEXT...]
+      Use SGR attribute(s).
+
+Combined:
+  ansicolor -b -f=1
+      Show the background table using foreground color 1.
+
+  ansicolor -b -f=2,3
+      Show two background tables, one with foreground 2 and one with foreground 3.
+
+  ansicolor -f -b=16 -s=1
+      Show the foreground table on background 16 using SGR 1.
+
+  ansicolor -f=0..5 -b=2..4
+      Print all selected foreground/background combinations.
+
+LIST:
+  1
+  1,2,3
+  1..10
+  1..3,9,12..10
+
+Options:
+  -f, --fg       Table mode: iterate foreground colors.
+  -f=LIST        Fixed foreground color(s), 0-255.
+
+  -b, --bg       Table mode: iterate background colors.
+  -b=LIST        Fixed background color(s), 0-255.
+
+  -s, --sgr      Table mode: iterate SGR attributes.
+  -s=LIST        Fixed SGR attribute(s), 0-107.
+
+  -h, --help     Show this help message.
+EOF
+}
+
+die() {
+    printf 'Error: %s\n' "$1" >&2
+    printf "Run 'ansicolor --help' for usage information.\n" >&2
+    exit 1
 }
 
 wrong_args() {
-    echo  "Invalid argument for ${1}: '${2}'. type ansicolor -h for usage." 1>&2
-    exit -1
+    die "invalid value for $1: '$2'"
+}
+
+PARSED_LIST=()
+
+parse_list() {
+    local label="$1" spec="$2" max="$3"
+    local item start end step i tmp
+    local items=()
+
+    [[ $spec =~ ^[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?(,[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?)*$ ]] || wrong_args "$label" "$spec"
+
+    readarray -d , -t items <<< "$spec"
+    
+    PARSED_LIST=()
+
+    for item in "${items[@]}"; do
+        if [[ $item == *..* ]]; then
+            start="${item%%..*}"
+            rest="${item#*..}"
+            end="${rest%%..*}"
+
+            if [[ $rest == *..* ]]; then
+                step="${rest##*..}"
+            else
+                step=1
+            fi
+            ((start > max || end > max)) && wrong_args "$label" "$item"
+            if ((start >= end)); then
+                tmp="$end"
+                end="$start"
+                start="$tmp"
+            fi
+            for ((i = start; i <= end ; i += step)); do
+                PARSED_LIST+=("$i")
+            done
+        else
+            ((item >= max)) && wrong_args "$label" "$item"
+            PARSED_LIST+=("$item")
+        fi
+    done
 }
 
 ansicolor_table() {
-    local c_mode
-    local c_type
-    c_type="${1}"
-    c_mode="${2:-0}"
-    local i
-    printf "\nStandard:\t"
+    local sgr="$1"
+    local col_type_fixed="$2"
+    local color_fixed="$3"
+    local col_type_iter="$4"
+    local text="$5"
+    local fixed="\\x1b[${sgr};${col_type_fixed};5;${color_fixed};${col_type_iter};5;%dm%5d"
+    [[ -n $text ]] && fixed+='\b\b\b\b\b'
+    fixed+='%s ' # printf will validate $text as a regular string
+    local i j k
+
+
+    printf '\nStandard:\t'
     for i in {0..7}; do
-        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
+        printf "${fixed}" "$i" "$i" "$text"
     done
-    printf "\033[0;10m\n\nIntense:\t"
+
+    printf '\033[0m\n\nIntense:\t'
+
     for i in {8..15}; do
-        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
+        printf "${fixed}" "$i" "$i" "$text"
     done
-    printf "\033[0;10m\n\n\n\t\t"
-    local j
-    local k
+
+    printf '\033[0m\n\n\n\t\t'
+
     for i in {0..26}; do
         for j in {0..7}; do
             ((k = i * 8 + j + 16))
-            printf "%b%5d " "\x1b[${c_mode};${c_type};5;${k}m" "$k"
+            printf "${fixed}" "$k" "$k" "$text"
         done
-        printf "\033[0;10m\n\t\t"
+
+        printf '\033[0m\n\t\t'
     done
-    printf "\n\nGreys:\t\t"
+
+    printf '\n\nGreys:\t\t'
+
     for i in {232..255}; do
-        printf "%b%5d " "\x1b[${c_mode};${c_type};5;${i}m" "$i"
+        printf "${fixed}" "$i" "$i" "$text"
     done
-    printf "\033[0;10m\n\n"
+
+    printf '\033[0m\n\n'
 }
+
+ansisgr_table() {
+    local background="$1"
+    local foreground="$2"
+    local text="$3"
+    local fixed="\\x1b[%d;38;5;${foreground};48;5;${background}m%5d"
+    [[ -n $text ]] && fixed+='\b\b\b\b\b'
+    fixed+='%s ' # printf will validate $text as a regular string
+    local i
+
+    printf '\nBasic:\t\t'
+    for i in {0..10}; do
+        printf "$fixed" "$i" "$i" "$text"
+    done
+
+    printf '\033[0m\n\nText:\t\t'
+    for i in 21 22 23 24 25 27 28 29; do
+        printf "$fixed" "$i" "$i" "$text"
+    done
+
+    printf '\033[0m\n\nUnderline:\t'
+    for i in 4 21 24 53 55; do
+        printf "$fixed" "$i" "$i" "$text"
+    done
+
+    printf '\033[0m\n\nForeground:\t'
+    for i in {30..37} {90..97}; do
+        printf "$fixed" "$i" "$i" "$text"
+    done
+
+    printf '\033[0m\n\nBackground:\t'
+    for i in {40..47} {100..107}; do
+        printf "$fixed" "$i" "$i" "$text"
+    done
+
+    printf '\033[0m\n\n'
+}
+
+FG_COLORS=(0)
+BG_COLORS=(0)
+SGR_MODES=(0)
 
 ansicolor_list() {
-    local c_mode
-    local c_type
-    local color
-    c_type="${1}"
-    color="${2}"
-    modes=({0..10})
-    c_mode="${3:-${modes[@]}}"
-    local text
-    local i
-    for i in ${c_mode[@]}; do
-        text="\\x1b[${i};${color_type};5;${color}m"
-        printf "%b%s%b\n" "$text" "$text" "\033[0;10m"
+    local text="$1"
+    local foreground background sgr esc
+
+    for sgr in "${SGR_MODES[@]}"; do
+        for background in "${BG_COLORS[@]}"; do
+            for foreground in "${FG_COLORS[@]}"; do
+                esc="\\x1b[${sgr};38;5;${foreground};48;5;${background}m"
+                if [[ -n $text ]]; then
+                    printf "%b%s\033[0m\n" "$esc" "$text"
+                else
+                    printf "%b%s\033[0m\n" "$esc" "$esc"
+                fi
+            done
+        done
     done
 }
 
-main() {
-    if [[ -z $1 ]]; then
-        ansicolor_table 38 0
-    else
-        local color_mode
-        local color_type
-        color_type=38
-        color_mode=
-        while [[ $# -gt 0 ]] ; do
-            case "$1" in
-                -b) color_type=48; shift ;;
-                -t|--sgr)
-                    shift
-                    if [[ "$1" =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 107 )); then
-                        color_mode="$1"
-                        shift
-                    else
-                        wrong_args "-t" "$color_mode"
-                    fi
-                ;;
-                -h|--help) usage ;;
-                *)
-                    if [[ ! "$1" =~ ^[0-9]+$ ]] || (( $1 < 0 || $1 > 255 )); then
-                        wrong_args "color code" "$1"
-                    elif [[ -n $2 ]]; then
-                        echo  "Too many arguments, type ansicolor -h for usage." 1>&2
-                        exit 2
-                    else
-                        ansicolor_list "$color_type" "$1" "$color_mode"
-                        exit 0
-                    fi
-                ;;
-            esac
+TABLE_TYPE=
+TEXT=
+while (($#)); do
+    case "$1" in
+        -h|--help)
+            help
+            exit 0
+            ;;
+
+        --)
+            shift
+            TEXT+=("$@")
+            break
+            ;;
+        
+        -f|--fg)
+            TABLE_TYPE="fg"
+            shift
+            ;;
+
+        -b|--bg)
+            TABLE_TYPE="bg"
+            shift
+            ;;
+
+        -s|--sgr)
+            TABLE_TYPE="sgr"
+            shift
+            ;;
+
+        -f=*|--fg=*)
+            parse_list "foreground color" "${1#*=}" 255
+            FG_COLORS=(${PARSED_LIST[@]})
+            shift
+            ;;
+
+        -b=*|--bg=*)
+            parse_list "background color" "${1#*=}" 255
+            BG_COLORS=(${PARSED_LIST[@]})
+            shift
+            ;;
+
+        -s=*|--sgr=*)
+            parse_list "SGR" "${1#*=}" 107
+            SGR_MODES=(${PARSED_LIST[@]})
+            shift
+            ;;
+
+        *)
+            TEXT+=("$@")
+            break
+            ;;
+    esac
+done
+
+if [[ -n $TABLE_TYPE ]]; then
+    if [[ $TABLE_TYPE == fg ]]; then
+        for SGR in "${SGR_MODES[@]}"; do
+            for BG in "${BG_COLORS[@]}"; do
+                ansicolor_table "$SGR" 48 "$BG" 38 "${TEXT[*]}"
+            done
         done
-        ansicolor_table "$color_type" "$color_mode"
+    elif [[ $TABLE_TYPE == bg  ]]; then
+        for SGR in "${SGR_MODES[@]}"; do
+            for FG in "${FG_COLORS[@]}"; do
+                ansicolor_table "$SGR" 38 "$FG" 48 "${TEXT[*]}"
+            done
+        done
+    else
+        for BG in "${BG_COLORS[@]}"; do
+            for FG in "${FG_COLORS[@]}"; do
+                ansisgr_table "$BG" "$FG" "${TEXT[*]}"
+            done
+        done
     fi
-}
-
-main "$@"
-
+else
+    ansicolor_list "${TEXT[*]}"
+fi
