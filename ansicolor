@@ -109,7 +109,7 @@ parse_list() {
                 PARSED_LIST+=("$i")
             done
         else
-            ((item >= max)) && wrong_args "$label" "$item"
+            ((item > max)) && wrong_args "$label" "$item"
             PARSED_LIST+=("$item")
         fi
     done
