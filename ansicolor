@@ -80,7 +80,7 @@ wrong_args() {
 PARSED_LIST=()
 
 parse_list() {
-    local label="$1" spec="$2" max="$3"
+    local label=$1 spec=$2 max=$3
     local item start end step i tmp
     local items=()
 
@@ -90,20 +90,20 @@ parse_list() {
     
     while read -r -d , item || [[ -n $item ]]; do
         if [[ $item == *..* ]]; then
-            start="${item%%..*}"
-            rest="${item#*..}"
-            end="${rest%%..*}"
+            start=${item%%..*}
+            rest=${item#*..}
+            end=${rest%%..*}
 
             if [[ $rest == *..* ]]; then
-                step="${rest##*..}"
+                step=${rest##*..}
             else
                 step=1
             fi
             ((start > max || end > max)) && wrong_args "$label" "$item"
             if ((start >= end)); then
-                tmp="$end"
-                end="$start"
-                start="$tmp"
+                tmp=$end
+                end=$start
+                start=$tmp
             fi
             for ((i = start; i <= end ; i += step)); do
                 PARSED_LIST+=("$i")
@@ -116,11 +116,11 @@ parse_list() {
 }
 
 ansicolor_table() {
-    local sgr="$1"
-    local col_type_fixed="$2"
-    local color_fixed="$3"
-    local col_type_iter="$4"
-    local text="$5"
+    local sgr=$1
+    local col_type_fixed=$2
+    local color_fixed=$3
+    local col_type_iter=$4
+    local text=$5
     local fixed="\\x1b[${sgr};${col_type_fixed};5;${color_fixed};${col_type_iter};5;%dm%5d"
     [[ -n $text ]] && fixed+='\b\b\b\b\b'
     fixed+='%s ' # printf will validate $text as a regular string
@@ -129,13 +129,13 @@ ansicolor_table() {
 
     printf '\nStandard:\t'
     for i in {0..7}; do
-        printf "${fixed}" "$i" "$i" "$text"
+        printf "$fixed" "$i" "$i" "$text"
     done
 
     printf '\033[0m\n\nIntense:\t'
 
     for i in {8..15}; do
-        printf "${fixed}" "$i" "$i" "$text"
+        printf "$fixed" "$i" "$i" "$text"
     done
 
     printf '\033[0m\n\n\n\t\t'
@@ -143,7 +143,7 @@ ansicolor_table() {
     for i in {0..26}; do
         for j in {0..7}; do
             ((k = i * 8 + j + 16))
-            printf "${fixed}" "$k" "$k" "$text"
+            printf "$fixed" "$k" "$k" "$text"
         done
 
         printf '\033[0m\n\t\t'
@@ -152,16 +152,16 @@ ansicolor_table() {
     printf '\n\nGreys:\t\t'
 
     for i in {232..255}; do
-        printf "${fixed}" "$i" "$i" "$text"
+        printf "$fixed" "$i" "$i" "$text"
     done
 
     printf '\033[0m\n\n'
 }
 
 ansisgr_table() {
-    local background="$1"
-    local foreground="$2"
-    local text="$3"
+    local background=$1
+    local foreground=$2
+    local text=$3
     local fixed="\\x1b[%d;38;5;${foreground};48;5;${background}m%5d"
     local fixed_no_bg="\\x1b[%d;38;5;${foreground}m%5d"
     local fixed_no_fg="\\x1b[%d;48;5;${background}m%5d"
