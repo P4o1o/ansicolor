@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+readonly ANSICOLOR_VERSION="0.1.0"
+
 help() {
 cat <<'EOF'
 Usage:
@@ -231,46 +233,42 @@ while (($#)); do
             help
             exit 0
             ;;
-
+        -v|--version)
+            echo "ansicolor version ${ANSICOLOR_VERSION}"
+            exit 0
+            ;;
         --)
             shift
             TEXT+=("$@")
             break
             ;;
-        
         -f|--fg)
             TABLE_TYPE="fg"
             shift
             ;;
-
         -b|--bg)
             TABLE_TYPE="bg"
             shift
             ;;
-
         -s|--sgr)
             TABLE_TYPE="sgr"
             shift
             ;;
-
         -f=*|--fg=*)
             parse_list "foreground color" "${1#*=}" 255
             FG_COLORS=(${PARSED_LIST[@]})
             shift
             ;;
-
         -b=*|--bg=*)
             parse_list "background color" "${1#*=}" 255
             BG_COLORS=(${PARSED_LIST[@]})
             shift
             ;;
-
         -s=*|--sgr=*)
             parse_list "SGR" "${1#*=}" 107
             SGR_MODES=(${PARSED_LIST[@]})
             shift
             ;;
-
         *)
             TEXT+=("$@")
             break
