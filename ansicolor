@@ -163,8 +163,16 @@ ansisgr_table() {
     local foreground="$2"
     local text="$3"
     local fixed="\\x1b[%d;38;5;${foreground};48;5;${background}m%5d"
-    [[ -n $text ]] && fixed+='\b\b\b\b\b'
+    local fixed_no_bg="\\x1b[%d;38;5;${foreground}m%5d"
+    local fixed_no_fg="\\x1b[%d;48;5;${background}m%5d"
+    if [[ -n $text ]]; then
+        fixed+='\b\b\b\b\b'
+        fixed_no_bg+='\b\b\b\b\b'
+        fixed_no_fg+='\b\b\b\b\b'
+    fi
     fixed+='%s ' # printf will validate $text as a regular string
+    fixed_no_bg+='%s '
+    fixed_no_fg+='%s '
     local i
 
     printf '\nBasic:\t\t'
@@ -184,12 +192,12 @@ ansisgr_table() {
 
     printf '\033[0m\n\nForeground:\t'
     for i in {30..37} {90..97}; do
-        printf "$fixed" "$i" "$i" "$text"
+        printf "$fixed_no_fg" "$i" "$i" "$text"
     done
 
     printf '\033[0m\n\nBackground:\t'
     for i in {40..47} {100..107}; do
-        printf "$fixed" "$i" "$i" "$text"
+        printf "$fixed_no_bg" "$i" "$i" "$text"
     done
 
     printf '\033[0m\n\n'
