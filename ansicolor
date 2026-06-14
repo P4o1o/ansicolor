@@ -84,7 +84,7 @@ parse_list() {
     local item start end step i tmp
     local items=()
 
-    [[ $spec =~ ^[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?(,[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?)*,?$ ]] || wrong_args "$label" "$spec"
+    [[ $spec =~ ^[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?(,[0-9]+(\.\.[0-9]+(\.\.[0-9]+)?)?)*$ ]] || wrong_args "$label" "$spec"
 
     PARSED_LIST=()
     
